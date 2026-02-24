@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpongeBob PDF Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --yellow: #FFD700;
+            --deep-yellow: #FFA500;
+            --ocean-blue: #006994;
+            --sky-blue: #87CEEB;
+            --sand: #F4D03F;
+            --bubble: rgba(135, 206, 235, 0.4);
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #4db8e8 40%, #006994 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bubbles-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bubble-bg {
+            position: absolute;
+            bottom: -80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: translateY(-110vh) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .ocean-floor {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(180deg, #c8a84b 0%, #a87832 100%);
+            z-index: 0;
+            border-top: 4px solid #e8c060;
+        }
+
+        .ocean-floor::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background:
+                radial-gradient(ellipse 60px 20px at 10% 100%, #c8a84b 50%, transparent 51%),
+                radial-gradient(ellipse 80px 25px at 30% 100%, #d4b456 50%, transparent 51%),
+                radial-gradient(ellipse 50px 18px at 55% 100%, #c0a040 50%, transparent 51%),
+                radial-gradient(ellipse 90px 28px at 75% 100%, #ceb050 50%, transparent 51%),
+                radial-gradient(ellipse 60px 20px at 92% 100%, #c8a84b 50%, transparent 51%);
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px 20px 100px;
+        }
+
+        /* ── Title ── */
+        .title-banner {
+            background: var(--yellow);
+            border: 5px solid #8B6914;
+            border-radius: 20px;
+            padding: 12px 36px;
+            margin-bottom: 20px;
+            box-shadow: 6px 6px 0 #8B6914, 0 0 30px rgba(255, 215, 0, 0.5);
+            transform: rotate(-1deg);
+        }
+
+        .title-banner h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            color: #8B6914;
+            text-shadow: 3px 3px 0 rgba(255, 255, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        /* ── Intro ── */
+        #intro-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .spongebob-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        #spongebob {
+            width: clamp(180px, 35vw, 280px);
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 50, 0.3));
+            animation: bobFloat 3s ease-in-out infinite;
+            display: block;
+        }
+
+        @keyframes bobFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-2deg);
+            }
+
+            50% {
+                transform: translateY(-18px) rotate(2deg);
+            }
+        }
+
+        .speech-bubble {
+            position: relative;
+            background: white;
+            border: 4px solid #333;
+            border-radius: 20px;
+            padding: 16px 24px;
+            max-width: 320px;
+            box-shadow: 4px 4px 0 #333;
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -22px;
+            left: 40px;
+            width: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 22px solid #333;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 43px;
+            width: 0;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-top: 18px solid white;
+            z-index: 1;
+        }
+
+        .speech-bubble p {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.25rem;
+            color: #333;
+            text-align: center;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        #readyBtn {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.4rem;
+            padding: 14px 40px;
+            background: var(--yellow);
+            color: #8B6914;
+            border: 4px solid #8B6914;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 5px 5px 0 #8B6914;
+            transition: all 0.1s;
+            animation: pulse 1.5s ease-in-out infinite;
+            margin-top: 10px;
+        }
+
+        #readyBtn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0 #8B6914;
+        }
+
+        #readyBtn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 2px 2px 0 #8B6914;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 5px 5px 0 #8B6914;
+            }
+
+            50% {
+                box-shadow: 5px 5px 0 #8B6914, 0 0 20px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        /* ── Quiz Screen ── */
+        #quiz-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            width: 100%;
+            max-width: 580px;
+        }
+
+        .quiz-spongebob {
+            width: clamp(100px, 20vw, 140px);
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 50, 0.3));
+            animation: bobFloat 3s ease-in-out infinite;
+        }
+
+        .progress-bar-wrap {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--yellow), var(--deep-yellow));
+            border-radius: 50px;
+            transition: width 0.5s ease;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4);
+        }
+
+        .progress-label {
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            font-size: 0.9rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            margin-top: 4px;
+        }
+
+        .question-card {
+            background: white;
+            border: 5px solid #333;
+            border-radius: 20px;
+            padding: 28px 32px;
+            width: 100%;
+            box-shadow: 8px 8px 0 #333;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes slideUp {
+            0% {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .question-num {
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.85rem;
+            color: var(--deep-yellow);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.35rem;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border: 3px solid #ccc;
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fafafa;
+            color: #333;
+        }
+
+        .answer-input:focus {
+            border-color: var(--deep-yellow);
+            box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.2);
+            background: white;
+        }
+
+        .answer-input.shake {
+            animation: shake 0.4s ease;
+            border-color: #e74c3c;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-8px);
+            }
+
+            40% {
+                transform: translateX(8px);
+            }
+
+            60% {
+                transform: translateX(-5px);
+            }
+
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .answer-input.correct-flash {
+            border-color: #27ae60;
+            background: #eafaf1;
+            animation: correctPop 0.3s ease;
+        }
+
+        @keyframes correctPop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.03);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .feedback-msg {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.05rem;
+            min-height: 28px;
+            text-align: center;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .feedback-msg.wrong {
+            color: #e74c3c;
+        }
+
+        .feedback-msg.right {
+            color: #27ae60;
+        }
+
+        /* ── Answer Reveal Banner ── */
+        .answer-reveal {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 3px solid #27ae60;
+            background: #eafaf1;
+            text-align: center;
+        }
+
+        .answer-reveal.wrong-reveal {
+            border-color: #e74c3c;
+            background: #fdf0ef;
+        }
+
+        .answer-reveal .reveal-label {
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .answer-reveal .reveal-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.15rem;
+            color: #27ae60;
+        }
+
+        .answer-reveal.wrong-reveal .reveal-text {
+            color: #e74c3c;
+        }
+
+        .next-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 14px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            background: var(--ocean-blue);
+            color: white;
+            border: 4px solid #004d6e;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 5px 5px 0 #004d6e;
+            transition: all 0.1s;
+            letter-spacing: 0.5px;
+            display: none;
+        }
+
+        .next-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0 #004d6e;
+        }
+
+        .next-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 2px 2px 0 #004d6e;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 14px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            background: var(--yellow);
+            color: #8B6914;
+            border: 4px solid #8B6914;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 5px 5px 0 #8B6914;
+            transition: all 0.1s;
+            letter-spacing: 0.5px;
+        }
+
+        .submit-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0 #8B6914;
+        }
+
+        .submit-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 2px 2px 0 #8B6914;
+        }
+
+        /* ── Score badge in quiz ── */
+        .score-badge {
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.9rem;
+            color: white;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 50px;
+            padding: 4px 14px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ── Fail Screen ── */
+        #fail-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        .fail-card {
+            background: white;
+            border: 5px solid #333;
+            border-radius: 24px;
+            padding: 36px 40px;
+            text-align: center;
+            max-width: 480px;
+            box-shadow: 10px 10px 0 #333;
+        }
+
+        .fail-emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .fail-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem;
+            color: #e74c3c;
+            margin-bottom: 8px;
+        }
+
+        .fail-sub {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .retry-btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.1rem;
+            padding: 12px 32px;
+            background: var(--yellow);
+            color: #8B6914;
+            border: 4px solid #8B6914;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #8B6914;
+            transition: all 0.1s;
+        }
+
+        .retry-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #8B6914;
+        }
+
+        .retry-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #8B6914;
+        }
+
+        /* ── Success Screen ── */
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        .success-card {
+            background: white;
+            border: 5px solid #333;
+            border-radius: 24px;
+            padding: 36px 40px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 10px 10px 0 #333;
+        }
+
+        .success-emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 12px;
+            animation: spin 1s ease-out;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg) scale(0);
+            }
+
+            100% {
+                transform: rotate(720deg) scale(1);
+            }
+        }
+
+        .success-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem;
+            color: #27ae60;
+            margin-bottom: 6px;
+        }
+
+        .score-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.4rem;
+            color: var(--deep-yellow);
+            margin-bottom: 10px;
+        }
+
+        .score-note {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 24px;
+            padding: 12px 16px;
+            background: #fffbe6;
+            border-radius: 12px;
+            border: 2px dashed var(--deep-yellow);
+        }
+
+        .download-btn {
+            display: inline-block;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            padding: 14px 36px;
+            background: #27ae60;
+            color: white;
+            border: 4px solid #1e8449;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 5px 5px 0 #1e8449;
+            text-decoration: none;
+            transition: all 0.1s;
+        }
+
+        .download-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0 #1e8449;
+        }
+
+        .download-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 2px 2px 0 #1e8449;
+        }
+
+        /* Confetti */
+        .confetti-piece {
+            position: fixed;
+            top: -20px;
+            border-radius: 2px;
+            animation: confettiFall linear forwards;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(110vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .screen {
+            transition: opacity 0.3s;
+        }
+
+        /* Mute button */
+        #muteBtn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            gap: 7px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.95rem;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #8B6914;
+            border: 3px solid #8B6914;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 3px 3px 0 #8B6914;
+            transition: all 0.1s;
+            backdrop-filter: blur(6px);
+        }
+
+        #muteBtn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0 #8B6914;
+        }
+
+        #muteBtn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0 #8B6914;
+        }
+
+        #muteBtn .mute-icon {
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bubbles-bg" id="bubblesBg"></div>
+    <div class="ocean-floor"></div>
+
+    <button id="muteBtn" onclick="toggleMute()">
+        <span class="mute-icon" id="muteIcon">🔊</span>
+        <span id="muteBtnLabel">Mute</span>
+    </button>
+
+    <audio id="introAudio" src="are_you_ready_kids.mp3" preload="auto"></audio>
+    <audio id="bgMusic" src="spongebob_theme.mp3" preload="auto" loop></audio>
+
+    <div class="container">
+
+        <div class="title-banner">
+            <h1>🧽 SpongeBob Quiz!</h1>
+        </div>
+
+        <!-- ── INTRO SCREEN ── -->
+        <div id="intro-screen" class="screen">
+            <div class="speech-bubble">
+                <p id="speechText">Ahhhh aaaare you ready, kids?! 🌊</p>
+            </div>
+            <div class="spongebob-wrap">
+                <img id="spongebob" src="spongebob.gif" alt="SpongeBob waving">
+            </div>
+            <button id="readyBtn" onclick="startQuiz()">🙋 I'M READY!</button>
+        </div>
+
+        <!-- ── QUIZ SCREEN ── -->
+        <div id="quiz-screen" class="screen">
+            <img class="quiz-spongebob" src="spongebob.gif" alt="SpongeBob">
+
+            <div style="width:100%;max-width:580px;display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <p class="progress-label" id="progressLabel">Question 1 of 9</p>
+                    <span class="score-badge" id="scoreBadge">✅ 0 correct</span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+                </div>
+            </div>
+
+            <div class="question-card" id="questionCard">
+                <p class="question-num" id="questionNum">Question 1</p>
+                <p class="question-text" id="questionText"></p>
+                <input class="answer-input" type="text" id="answerInput" placeholder="Type your answer here..."
+                    autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()">
+                <div class="feedback-msg" id="feedbackMsg"></div>
+
+                <!-- Answer reveal shown after each submission -->
+                <div class="answer-reveal" id="answerReveal">
+                    <div class="reveal-label">✨ Full Answer</div>
+                    <div class="reveal-text" id="revealText"></div>
+                </div>
+
+                <button class="submit-btn" id="submitBtn" onclick="checkAnswer()">Submit Answer →</button>
+                <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question →</button>
+            </div>
+        </div>
+
+        <!-- ── SUCCESS SCREEN (score 7-9) ── -->
+        <div id="success-screen" class="screen">
+            <div class="success-card">
+                <span class="success-emoji" id="successEmoji">🏆</span>
+                <h2 class="success-title" id="successTitle">You did it!</h2>
+                <p class="score-display" id="successScore"></p>
+                <p class="score-note" id="successNote"></p>
+                <a class="download-btn" id="downloadLink" href="yourfile.pdf" download>
+                    📄 Download PDF
+                </a>
+            </div>
+            <img style="width:180px;animation:bobFloat 3s ease-in-out infinite;" src="spongebob.gif"
+                alt="SpongeBob celebrating">
+        </div>
+
+        <!-- ── FAIL SCREEN (score < 7) ── -->
+        <div id="fail-screen" class="screen">
+            <div class="fail-card">
+                <span class="fail-emoji">😢</span>
+                <h2 class="fail-title">Not quite there!</h2>
+                <p class="fail-sub" id="failNote"></p>
+                <button class="retry-btn" onclick="retryQuiz()">🔄 Try Again</button>
+            </div>
+            <img style="width:160px;animation:bobFloat 3s ease-in-out infinite;margin-top:10px;" src="spongebob.gif"
+                alt="SpongeBob sad">
+        </div>
+
+    </div>
+
+    <script>
+
+        //  CONFIG
+        const PDF_PATH = "HAPPY_BIRTHDAY.pdf"; 
+
+    // ─── EMAIL TRACKING ──────────────────────────────────────────────────────────
+    const WEB3FORMS_KEY = 'YOUR_ACCESS_KEY_HERE'; // 🔁 Your Web3Forms key
+    const YOUR_EMAIL = 'your-email@example.com'; // 🔁 Your email
+
+    async function sendNotification(subject, message) {
+        try {
+            await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    access_key: WEB3FORMS_KEY,
+                    subject: subject,
+                    from_name: 'SpongeBob Quiz Tracker',
+                    to: YOUR_EMAIL,
+                    message: message
+                })
+            });
+        } catch (e) { console.error('Notification error:', e); }
+    }
+
+    async function getDeviceInfo() {
+        // ── Basic device/browser info ──────────────────────────────
+        const ua = navigator.userAgent;
+        const platform = navigator.platform || 'Unknown';
+        const language = navigator.language || 'Unknown';
+        const screenRes = `${screen.width}x${screen.height}`;
+        const windowRes = `${window.innerWidth}x${window.innerHeight}`;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const localTime = new Date().toLocaleString();
+        const online = navigator.onLine ? 'Yes' : 'No';
+        const cookiesOn = navigator.cookieEnabled ? 'Yes' : 'No';
+        const cores = navigator.hardwareConcurrency || 'Unknown';
+        const memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown';
+        const touch = navigator.maxTouchPoints > 0 ? `Yes (${navigator.maxTouchPoints} points)` : 'No';
+        const referrer = document.referrer || 'Direct / No referrer';
+        const pageUrl = window.location.href;
+
+        // ── Detect device type ─────────────────────────────────────
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+        const deviceType = isMobile ? 'Mobile / Tablet' : 'Desktop / Laptop';
+
+        // ── Parse browser name ─────────────────────────────────────
+        let browser = 'Unknown';
+        if (/Edg/i.test(ua)) browser = 'Microsoft Edge';
+        else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+        else if (/Chrome/i.test(ua)) browser = 'Google Chrome';
+        else if (/Firefox/i.test(ua)) browser = 'Mozilla Firefox';
+        else if (/Safari/i.test(ua)) browser = 'Apple Safari';
+
+        // ── Parse OS ───────────────────────────────────────────────
+        let os = 'Unknown';
+        if (/Windows NT 10/i.test(ua)) os = 'Windows 10/11';
+        else if (/Windows NT 6.3/i.test(ua)) os = 'Windows 8.1';
+        else if (/Windows/i.test(ua)) os = 'Windows (older)';
+        else if (/iPhone/i.test(ua)) os = 'iOS (iPhone)';
+        else if (/iPad/i.test(ua)) os = 'iOS (iPad)';
+        else if (/Android/i.test(ua)) os = 'Android';
+        else if (/Mac OS X/i.test(ua)) os = 'macOS';
+        else if (/Linux/i.test(ua)) os = 'Linux';
+
+        // ── Battery info (where supported) ────────────────────────
+        let batteryInfo = 'Not supported by this browser';
+        try {
+            const battery = await navigator.getBattery();
+            const level = Math.round(battery.level * 100);
+            const charging = battery.charging ? 'Charging ⚡' : 'Not charging 🔋';
+            batteryInfo = `${level}% — ${charging}`;
+        } catch (e) { }
+
+        // ── Network info (where supported) ────────────────────────
+        let networkInfo = 'Not available';
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn) {
+            networkInfo = `Type: ${conn.effectiveType || 'Unknown'} | Downlink: ${conn.downlink || '?'} Mbps | Save Data: ${conn.saveData ? 'Yes' : 'No'}`;
+        }
+
+        // ── IP + Location via free API ─────────────────────────────
+        let ip = 'Unknown';
+        let city = 'Unknown';
+        let region = 'Unknown';
+        let country = 'Unknown';
+        let isp = 'Unknown';
+        let lat = 'Unknown';
+        let lon = 'Unknown';
+        let mapLink = '';
+
+        try {
+            const geo = await fetch('https://ipapi.co/json/');
+            const d = await geo.json();
+            ip = d.ip || 'Unknown';
+            city = d.city || 'Unknown';
+            region = d.region || 'Unknown';
+            country = d.country_name || 'Unknown';
+            isp = d.org || 'Unknown';
+            lat = d.latitude || 'Unknown';
+            lon = d.longitude || 'Unknown';
+            if (lat !== 'Unknown' && lon !== 'Unknown') {
+                mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+            }
+        } catch (e) { }
+
+        // ── Build the full report ──────────────────────────────────
+        return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 LOCATION & NETWORK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IP Address  : ${ip}
+Country     : ${country}
+Region      : ${region}
+City        : ${city}
+Coordinates : ${lat}, ${lon}
+Map         : ${mapLink || 'N/A'}
+ISP/Org     : ${isp}
+Timezone    : ${timezone}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 DEVICE & BROWSER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Device Type : ${deviceType}
+OS          : ${os}
+Browser     : ${browser}
+Platform    : ${platform}
+Language    : ${language}
+Touch Screen: ${touch}
+CPU Cores   : ${cores}
+RAM         : ${memory}
+Battery     : ${batteryInfo}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🖥️ SCREEN & CONNECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Screen Res  : ${screenRes}
+Window Size : ${windowRes}
+Online      : ${online}
+Network     : ${networkInfo}
+Cookies On  : ${cookiesOn}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 VISIT INFO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Time        : ${localTime}
+Came From   : ${referrer}
+Page URL    : ${pageUrl}
+User Agent  : ${ua}
+    `.trim();
+    }
+
+    // 📬 Fire when page loads — collect everything then send
+    window.addEventListener('load', async () => {
+        const info = await getDeviceInfo();
+        sendNotification('🧽 Quiz Page Opened!', `Someone just opened your SpongeBob Quiz!\n\n${info}`);
+    });
+    // ─────────────────────────────────────────────────────────────────────────────
+
+        const questions = [
+            { q: "What do you think I value most about you?", a: "Your behavior" },
+            { q: "Where would I want you and me to travel together?", a: "Dubai" },
+            { q: "What do you think makes me feel that you're the right person?", a: "Your effort" },
+            { q: "What do I do when I'm upset?", a: "Quiet and rude" },
+            { q: "What do you think makes me feel safe with you?", a: "Your love" },
+            { q: "What do you think I need when I shut down?", a: "Food" },
+            { q: "What do you think I notice about you that others don't?", a: "Your good side" },
+            { q: "What do you think makes me finally open up?", a: "Comfortable with you" },
+            { q: "What do you think would break my trust instantly?", a: "The way you treat me" }
+        ];
+
+        // Score-based messages for 7, 8, 9 correct
+        const scoreMessages = {
+            9: {
+                emoji: "🏆",
+                title: "PERFECT SCORE!",
+                note: "9 out of 9 — You know me better than I know myself! That's not just impressive, that's special. I'm genuinely proud of you, and this PDF is 100% yours. 💛"
+            },
+            8: {
+                emoji: "🌟",
+                title: "So close to perfect!",
+                note: "8 out of 9 — You clearly pay attention, and that means everything to me. One little slip doesn't change the fact that you really *get* me. Download yours — you earned it. 😊"
+            },
+            7: {
+                emoji: "💛",
+                title: "You passed!",
+                note: "7 out of 9 — You got there! It wasn't flawless, but you showed up and gave it your best. That counts. The PDF is yours — just remember the ones you missed next time. 😄"
+            }
+        };
+
+
+        //  SMART MATCHING
+        //  Returns true if the user's answer contains at least one
+        //  meaningful keyword from the expected answer.
+        // Words to ignore when extracting keywords
+        const STOP_WORDS = new Set([
+            'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+            'of', 'with', 'my', 'your', 'you', 'me', 'i', 'is', 'it', 'do', 'does',
+            'that', 'this', 'what', 'when', 'how', 'why', 'who'
+        ]);
+
+        function extractKeywords(text) {
+            return text.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .split(/\s+/)
+                .filter(w => w.length > 1 && !STOP_WORDS.has(w));
+        }
+
+        function isSmartMatch(userAnswer, correctAnswer) {
+            const userWords = extractKeywords(userAnswer);
+            const correctWords = extractKeywords(correctAnswer);
+
+            if (userWords.length === 0 || correctWords.length === 0) return false;
+
+            // Check if ANY keyword from the correct answer appears in the user's answer
+            return correctWords.some(kw =>
+                userWords.some(uw => uw.includes(kw) || kw.includes(uw))
+            );
+        }
+
+     
+        //  STATE
+        let currentQuestion = 0;
+        let score = 0;
+        let attempts = 0;
+        let isMuted = false;
+        let answerSubmitted = false;
+
+
+        //  AUDIO
+        const introAudio = document.getElementById('introAudio');
+        const bgMusic = document.getElementById('bgMusic');
+        bgMusic.volume = 0.4;
+
+        window.addEventListener('load', () => { introAudio.play().catch(() => { }); });
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            bgMusic.muted = isMuted;
+            document.getElementById('muteIcon').textContent = isMuted ? '🔇' : '🔊';
+            document.getElementById('muteBtnLabel').textContent = isMuted ? 'Unmute' : 'Mute';
+        }
+
+        //  BACKGROUND BUBBLES
+        (function spawnBubbles() {
+            const container = document.getElementById('bubblesBg');
+            for (let i = 0; i < 18; i++) {
+                const b = document.createElement('div');
+                b.className = 'bubble-bg';
+                const size = Math.random() * 60 + 15;
+                b.style.cssText = `
+                    width:${size}px; height:${size}px;
+                    left:${Math.random() * 100}%;
+                    animation-duration:${Math.random() * 12 + 8}s;
+                    animation-delay:${Math.random() * 10}s;
+                    opacity:${Math.random() * 0.4 + 0.1};
+                `;
+                container.appendChild(b);
+            }
+        })();
+
+
+        //  INTRO
+        const introMessages = [
+            "Ahhhh aaaare you ready, kids?! 🌊",
+            "Aye aye, captain! 🫡",
+            "I CAN'T HEEEEAR YOU! 📣",
+            "Who lives in a pineapple under the sea? 🍍"
+        ];
+        let msgIdx = 0;
+        const speechInterval = setInterval(() => {
+            msgIdx = (msgIdx + 1) % introMessages.length;
+            document.getElementById('speechText').textContent = introMessages[msgIdx];
+        }, 2500);
+
+        function startQuiz() {
+            clearInterval(speechInterval);
+            introAudio.pause();
+            introAudio.currentTime = 0;
+            bgMusic.play().catch(() => { });
+            document.getElementById('muteBtn').style.display = 'flex';
+
+            const introScreen = document.getElementById('intro-screen');
+            introScreen.style.opacity = '0';
+            setTimeout(() => {
+                introScreen.style.display = 'none';
+                const quizScreen = document.getElementById('quiz-screen');
+                quizScreen.style.display = 'flex';
+                quizScreen.style.opacity = '0';
+                setTimeout(() => { quizScreen.style.opacity = '1'; }, 50);
+                renderQuestion();
+            }, 300);
+        }
+
+        //  QUIZ LOGIC
+
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            const total = questions.length;
+
+            document.getElementById('questionNum').textContent = `Question ${currentQuestion + 1}`;
+            document.getElementById('questionText').textContent = q.q;
+            document.getElementById('progressLabel').textContent = `Question ${currentQuestion + 1} of ${total}`;
+            document.getElementById('progressBar').style.width = `${(currentQuestion / total) * 100}%`;
+            document.getElementById('scoreBadge').textContent = `✅ ${score} correct`;
+
+            // Reset feedback & reveal
+            document.getElementById('feedbackMsg').textContent = '';
+            document.getElementById('feedbackMsg').className = 'feedback-msg';
+            document.getElementById('answerReveal').style.display = 'none';
+            document.getElementById('answerReveal').className = 'answer-reveal';
+
+            // Reset input
+            const input = document.getElementById('answerInput');
+            input.value = '';
+            input.className = 'answer-input';
+            input.disabled = false;
+
+            // Show submit, hide next
+            document.getElementById('submitBtn').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'none';
+
+            // Re-trigger slide animation
+            const card = document.getElementById('questionCard');
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+
+            setTimeout(() => input.focus(), 100);
+            attempts = 0;
+            answerSubmitted = false;
+        }
+
+        function checkAnswer() {
+            if (answerSubmitted) return;
+
+            const input = document.getElementById('answerInput');
+            const userAnswer = input.value.trim();
+            if (!userAnswer) return;
+
+            const correctAnswer = questions[currentQuestion].a;
+            const isCorrect = isSmartMatch(userAnswer, correctAnswer);
+
+            const msg = document.getElementById('feedbackMsg');
+            const reveal = document.getElementById('answerReveal');
+
+            if (isCorrect) {
+                // ✅ CORRECT — lock input, reveal answer, show Next button
+                score++;
+                answerSubmitted = true;
+                input.disabled = true;
+                input.className = 'answer-input correct-flash';
+                msg.textContent = ['🎉 Great answer!', '🌟 Nailed it!', '🦀 SpongeBob approves!', '💛 Yes, exactly!'][Math.floor(Math.random() * 4)];
+                msg.className = 'feedback-msg right';
+
+                // Reveal the full correct answer in green
+                document.getElementById('revealText').textContent = correctAnswer;
+                reveal.className = 'answer-reveal';
+                reveal.style.display = 'block';
+
+                document.getElementById('submitBtn').style.display = 'none';
+                document.getElementById('nextBtn').style.display = 'block';
+
+                document.getElementById('scoreBadge').textContent = `✅ ${score} correct`;
+
+            } else {
+                // ❌ WRONG — shake, show error, clear input, keep trying
+                attempts++;
+                input.className = 'answer-input shake';
+
+                const wrongMessages = [
+                    'Oops! Try again 🤔',
+                    'Not quite! Give it another shot 🧠',
+                    'Hmm, think harder... 💭',
+                    'Still not right — keep trying! 👀'
+                ];
+                msg.textContent = wrongMessages[Math.min(attempts - 1, wrongMessages.length - 1)];
+                msg.className = 'feedback-msg wrong';
+
+                // No reveal — keep answer hidden so retrying is meaningful
+                reveal.style.display = 'none';
+
+                setTimeout(() => {
+                    input.className = 'answer-input';
+                    input.value = '';
+                    input.focus();
+                }, 500);
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                renderQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+
+        function showEndScreen() {
+            document.getElementById('progressBar').style.width = '100%';
+
+            // Fade out music
+            const fadeOut = setInterval(() => {
+                if (bgMusic.volume > 0.05) { bgMusic.volume -= 0.05; }
+                else { bgMusic.pause(); bgMusic.volume = 0; clearInterval(fadeOut); }
+            }, 80);
+            document.getElementById('muteBtn').style.display = 'none';
+
+            const quizScreen = document.getElementById('quiz-screen');
+            quizScreen.style.opacity = '0';
+
+            setTimeout(() => {
+                quizScreen.style.display = 'none';
+
+                if (score >= 7) {
+                    showSuccess();
+                } else {
+                    showFail();
+                }
+            }, 400);
+        }
+
+        function showSuccess() {
+            sendNotification(
+                `🏆 Quiz Completed — ${score}/9 correct!`,
+                `Quiz finished!\n\nScore: ${score} out of ${questions.length}\nResult: ${score >= 7 ? '✅ PASSED — PDF unlocked' : '❌ FAILED — PDF blocked'}\nTime: ${new Date().toLocaleString()}`
+            );
+
+            const data = scoreMessages[score] || scoreMessages[7];
+
+            document.getElementById('successEmoji').textContent = data.emoji;
+            document.getElementById('successTitle').textContent = data.title;
+            document.getElementById('successScore').textContent = `${score} / ${questions.length} correct`;
+            document.getElementById('successNote').textContent = data.note;
+            document.getElementById('downloadLink').href = PDF_PATH;
+
+            const successScreen = document.getElementById('success-screen');
+            successScreen.style.display = 'flex';
+
+            // Auto-trigger download
+            setTimeout(() => {
+                const a = document.createElement('a');
+                a.href = PDF_PATH; a.download = '';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }, 800);
+
+            launchConfetti();
+        }
+
+        function showFail() {
+            sendNotification(
+                `❌ Quiz Failed — ${score}/9 correct`,
+                `Quiz finished!\n\nScore: ${score} out of ${questions.length}\nResult: ❌ FAILED — PDF blocked\nTime: ${new Date().toLocaleString()}`
+            );
+
+            const failNotes = {
+                6: "6 out of 9 — So close! You were just one away from unlocking it. Give it another shot, you've almost got it! 💪",
+                5: "5 out of 9 — Halfway there! You know some things but maybe a few more of those small details could help. Try again! 🤔",
+                0: "Hmm, it seems like you need a little more time to get to know me. Don't give up — try again! 😄"
+            };
+            const note = failNotes[score] || failNotes[score <= 4 ? 0 : score] ||
+                `${score} out of 9 — Not enough to unlock the PDF this time. You need at least 7. Try again! 😊`;
+            document.getElementById('failNote').textContent = failNotes[score] ?? `${score} out of 9 — Not enough to unlock the PDF just yet. You need at least 7 correct. You've got this — try again! 😊`;
+
+            const failScreen = document.getElementById('fail-screen');
+            failScreen.style.display = 'flex';
+        }
+
+        function retryQuiz() {
+            // Reset state
+            currentQuestion = 0;
+            score = 0;
+            attempts = 0;
+            answerSubmitted = false;
+
+            document.getElementById('fail-screen').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'none';
+
+            bgMusic.volume = 0.8;
+            bgMusic.play().catch(() => { });
+            document.getElementById('muteBtn').style.display = 'flex';
+
+            const quizScreen = document.getElementById('quiz-screen');
+            quizScreen.style.display = 'flex';
+            quizScreen.style.opacity = '0';
+            setTimeout(() => { quizScreen.style.opacity = '1'; }, 50);
+            renderQuestion();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  CONFETTI
+        // ═══════════════════════════════════════════════════════════
+        function launchConfetti() {
+            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+            for (let i = 0; i < 80; i++) {
+                setTimeout(() => {
+                    const piece = document.createElement('div');
+                    piece.className = 'confetti-piece';
+                    piece.style.cssText = `
+                        left:${Math.random() * 100}vw;
+                        background:${colors[Math.floor(Math.random() * colors.length)]};
+                        animation-duration:${Math.random() * 2 + 2}s;
+                        animation-delay:${Math.random()}s;
+                        transform:rotate(${Math.random() * 360}deg);
+                        width:${Math.random() * 10 + 6}px;
+                        height:${Math.random() * 10 + 6}px;
+                        border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+                    `;
+                    document.body.appendChild(piece);
+                    setTimeout(() => piece.remove(), 4000);
+                }, i * 30);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
